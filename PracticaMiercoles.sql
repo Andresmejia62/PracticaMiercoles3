@@ -1,114 +1,109 @@
--- 1. CREACIÓN DE LA BASE DE DATOS
-USE master;
-GO
+use master
+go
 
-IF EXISTS (SELECT name FROM sys.databases WHERE name = 'EmpresaSQL')
-BEGIN 
-    DROP DATABASE EmpresaSQL;
-END
-GO
+if exists (select name from sys.databases where name = 'EmpresaSQL')
+begin 
+    drop database EmpresaSQL
+end
+go
 
-CREATE DATABASE EmpresaSQL;
-GO
+create database EmpresaSQL
+go
 
-USE EmpresaSQL;
-GO
+use EmpresaSQL
+go
 
--- 2. CREACIÓN DE TABLAS MAESTRAS e INDEPENDIENTES
-CREATE TABLE TDepartamento (
-    nDepartamentoID INT IDENTITY(1,1) CONSTRAINT pk_nDepartamentoID PRIMARY KEY,
-    cNombreDepartamento NVARCHAR(50) NOT NULL CONSTRAINT uk_cNombreDepartamento UNIQUE
+create table TDepartamento (
+    nDepartamentoID int identity(1,1) constraint pk_nDepartamentoID primary key,
+    cNombreDepartamento nvarchar(50) not null constraint uk_cNombreDepartamento unique
 );
-GO
+go
 
-CREATE TABLE TCargo (
-    nCargoID INT IDENTITY(1,1) CONSTRAINT pk_nCargoID PRIMARY KEY,
-    cNombreCargo NVARCHAR(50) NOT NULL CONSTRAINT uk_cNombreCargo UNIQUE
+create table TCargo (
+    nCargoID int identity(1,1) constraint pk_nCargoID primary key,
+    cNombreCargo nvarchar(50) not null constraint uk_cNombreCargo unique
 );
-GO
+go
 
-CREATE TABLE TProyecto (
-    nProyectoID INT IDENTITY(1,1) CONSTRAINT pk_nProyectoID PRIMARY KEY,
-    nombreProyecto NVARCHAR(60) NOT NULL,
-    FechaInicio DATETIME NOT NULL,
-    FechaFinalizacion DATETIME
+create table TProyecto (
+    nProyectoID int identity(1,1) constraint pk_nProyectoID primary key,
+    nombreProyecto nvarchar(60) not null,
+    FechaInicio datetime not null,
+    FechaFinalizacion datetime
 );
-GO
+go
 
-CREATE TABLE TSucursal (
-    nSucursalID INT IDENTITY(1,1) CONSTRAINT pk_TSucursalID PRIMARY KEY,
-    cNombreSucursal NVARCHAR(100) NOT NULL CONSTRAINT uk_cNombreSucursal UNIQUE,
-    cCiudad NVARCHAR(50) NOT NULL,
-    bActivo BIT CONSTRAINT df_TSucursal_bActivo DEFAULT 1
+create table TSucursal (
+    nSucursalID int identity(1,1) constraint pk_TSucursalID primary key,
+    cNombreSucursal nvarchar(100) not null constraint uk_cNombreSucursal unique,
+    cCiudad nvarchar(50) not null,
+    bActivo bit constraint df_TSucursal_bActivo default 1
 );
-GO
+go
 
-CREATE TABLE TCliente (
-    nClienteID INT IDENTITY(1,1) CONSTRAINT pk_TClienteID PRIMARY KEY,
-    cNif NVARCHAR(15) NOT NULL CONSTRAINT uk_TCliente_cNif UNIQUE,
-    cNombre NVARCHAR(50) NOT NULL,
-    cApellido NVARCHAR(50) NOT NULL,
-    cCorreo NVARCHAR(100) CONSTRAINT uk_TCliente_cCorreo UNIQUE,
-    cTelefono NVARCHAR(20),
-    nEdad INT CONSTRAINT ck_TCliente_nEdad CHECK(nEdad >= 18),
-    dFechaRegistro DATE CONSTRAINT df_TCliente_dFechaRegistro DEFAULT GETDATE()
+create table TCliente (
+    nClienteID int identity(1,1) constraint pk_TClienteID primary key,
+    cNif nvarchar(15) not null constraint uk_TCliente_cNif unique,
+    cNombre nvarchar(50) not null,
+    cApellido nvarchar(50) not null,
+    cCorreo nvarchar(100) constraint uk_TCliente_cCorreo unique,
+    cTelefono nvarchar(20),
+    nEdad int constraint ck_TCliente_nEdad check(nEdad >= 18),
+    dFechaRegistro date constraint df_TCliente_dFechaRegistro default getdate()
 );
-GO
+go
 
--- 3. CREACIÓN DE TABLAS DEPENDIENTES (Estructura final consolidada)
-CREATE TABLE TEmpleado (
-    nEmpleadoID INT IDENTITY(1,1) CONSTRAINT pk_nEmpleadoID PRIMARY KEY,
-    cNif NVARCHAR(15) NOT NULL CONSTRAINT uk_cNif UNIQUE,
-    cNombre NVARCHAR(100),
-    cApellido NVARCHAR(100),
-    nDepartamentoID INT,
-    nCargoID INT,
-    dFechaContratacion DATETIME CONSTRAINT df_dFechaContratacion DEFAULT GETDATE(),
-    nSalario INT CONSTRAINT ck_nSalario CHECK(nSalario > 300),
-    cEmail NVARCHAR(60) CONSTRAINT uk_TEmpleado_cEmail UNIQUE,
-    cTelefono NVARCHAR(8),
-    CDireccion NVARCHAR(70),
-    nEdad INT CONSTRAINT ck_TEmpleado_nEdad CHECK (nEdad BETWEEN 18 AND 65),
-    cCorreo NVARCHAR(100) CONSTRAINT uk_TEmpleado_cCorreo UNIQUE,
-    bActivo BIT CONSTRAINT df_TEmpleado_bActivo DEFAULT 1,
-    telefono VARCHAR(20),
-    cGenero CHAR(1) CONSTRAINT ck_TEmpleado_cGenero CHECK (cGenero IN ('M', 'F')),
-    dFechaNacimiento DATE,
+create table TEmpleado (
+    nEmpleadoID int identity(1,1) constraint pk_nEmpleadoID primary key,
+    cNif nvarchar(15) not null constraint uk_cNif unique,
+    cNombre nvarchar(100),
+    cApellido nvarchar(100),
+    nDepartamentoID int,
+    nCargoID int,
+    dFechaContratacion datetime constraint df_dFechaContratacion default getdate(),
+    nSalario int constraint ck_nSalario check(nSalario > 300),
+    cEmail nvarchar(60) null,
+    cTelefono nvarchar(8),
+    CDireccion nvarchar(70),
+    nEdad int constraint ck_TEmpleado_nEdad check (nEdad between 18 and 65),
+    cCorreo nvarchar(100) null,
+    bActivo bit constraint df_TEmpleado_bActivo default 1,
+    telefono varchar(20),
+    cGenero char(1) constraint ck_TEmpleado_cGenero check (cGenero in ('M', 'F')),
+    dFechaNacimiento date,
 
-    CONSTRAINT fk_TEmpleado_TDepartamento FOREIGN KEY (nDepartamentoID) REFERENCES TDepartamento(nDepartamentoID),
-    CONSTRAINT fk_TEmpleado_TCargo FOREIGN KEY (nCargoID) REFERENCES TCargo(nCargoID)
+    constraint fk_TEmpleado_TDepartamento foreign key (nDepartamentoID) references TDepartamento(nDepartamentoID),
+    constraint fk_TEmpleado_TCargo foreign key (nCargoID) references TCargo(nCargoID)
 );
-GO
+go
 
-CREATE TABLE TEmpleadoProyecto (
-    nEmpleadoID INT,
-    nProyectoID INT,
-    CONSTRAINT pk_TEmpleadoProyecto PRIMARY KEY (nEmpleadoID, nProyectoID),
-    CONSTRAINT fk_TEmpleadoProyecto_Empleado FOREIGN KEY (nEmpleadoID) REFERENCES TEmpleado(nEmpleadoID),
-    CONSTRAINT fk_TEmpleadoProyecto_Proyecto FOREIGN KEY (nProyectoID) REFERENCES TProyecto(nProyectoID)
+create table TEmpleadoProyecto (
+    nEmpleadoID int,
+    nProyectoID int,
+    constraint pk_TEmpleadoProyecto primary key (nEmpleadoID, nProyectoID),
+    constraint fk_TEmpleadoProyecto_Empleado foreign key (nEmpleadoID) references TEmpleado(nEmpleadoID),
+    constraint fk_TEmpleadoProyecto_Proyecto foreign key (nProyectoID) references TProyecto(nProyectoID)
 );
-GO
+go
 
-CREATE TABLE TVenta (
-    nVentaID INT IDENTITY(1,1) CONSTRAINT pk_nVentaID PRIMARY KEY,
-    nClienteID INT,
-    nSucursalID INT,
-    dFechaVenta DATETIME CONSTRAINT df_TVenta_dFechaVenta DEFAULT GETDATE(),
-    nMontoTotal INT CONSTRAINT ck_TVenta_nMontoTotal CHECK(nMontoTotal > 0),
-    CONSTRAINT fk_TVenta_TCliente FOREIGN KEY (nClienteID) REFERENCES TCliente(nClienteID),
-    CONSTRAINT fk_TVenta_TSucursal FOREIGN KEY (nSucursalID) REFERENCES TSucursal(nSucursalID)
+create table TVenta (
+    nVentaID int identity(1,1) constraint pk_nVentaID primary key,
+    nClienteID int,
+    nSucursalID int,
+    dFechaVenta datetime constraint df_TVenta_dFechaVenta default getdate(),
+    nMontoTotal int constraint ck_TVenta_nMontoTotal check(nMontoTotal > 0),
+    constraint fk_TVenta_TCliente foreign key (nClienteID) references TCliente(nClienteID),
+    constraint fk_TVenta_TSucursal foreign key (nSucursalID) references TSucursal(nSucursalID)
 );
-GO
+go
 
-
--- 4. INSERCIÓN DE DATOS INICIALES
-INSERT INTO TDepartamento (cNombreDepartamento) VALUES 
+insert into TDepartamento (cNombreDepartamento) values 
 ('Recursos Humanos'), ('Tecnología'), ('Finanzas'), ('Operaciones'), ('Mercadeo');
 
-INSERT INTO TCargo (cNombreCargo) VALUES 
+insert into TCargo (cNombreCargo) values 
 ('Gerente'), ('Analista'), ('Desarrollador'), ('Coordinador'), ('Asistente');
 
-INSERT INTO TEmpleado (cNif, cNombre, cApellido, nDepartamentoID, nCargoID, nSalario, nEdad, cCorreo, cGenero, dFechaNacimiento) VALUES 
+insert into TEmpleado (cNif, cNombre, cApellido, nDepartamentoID, nCargoID, nSalario, nEdad, cCorreo, cGenero, dFechaNacimiento) values 
 ('1111', 'Carlos', 'Mendoza', 2, 3, 1200, 35, 'carlos.mendoza@empresa.com', 'M', '1991-04-12'),
 ('2222', 'Ana', 'Silva', 1, 1, 2500, 33, 'ana.silva@empresa.com', 'F', '1993-08-25'),
 ('3333', 'Jorge', 'Reyes', 3, 2, 950, 37, 'jorge.reyes@empresa.com', 'M', '1988-11-05'),
@@ -120,33 +115,32 @@ INSERT INTO TEmpleado (cNif, cNombre, cApellido, nDepartamentoID, nCargoID, nSal
 ('9999', 'Diego', 'Ortiz', 4, 2, 850, 38, 'diego.ortiz@empresa.com', 'M', '1987-07-09'),
 ('0000', 'María', 'Espinoza', 1, 5, 450, 34, 'maria.espinoza@empresa.com', 'F', '1991-09-15');
 
-INSERT INTO TProyecto (nombreProyecto, FechaInicio, FechaFinalizacion) VALUES 
+insert into TProyecto (nombreProyecto, FechaInicio, FechaFinalizacion) values 
 ('Migración en la Nube', '2026-01-15', '2026-06-30'),
 ('Reestructuración Salarial', '2026-03-01', null),
 ('Campaña Expansión 2026', '2026-05-01', '2026-12-31');
 
-INSERT INTO TEmpleadoProyecto (nEmpleadoID, nProyectoID) VALUES 
+insert into TEmpleadoProyecto (nEmpleadoID, nProyectoID) values 
 (1, 1), (4, 1), (2, 2), (6, 3);
 
-INSERT INTO TEmpleado (cNif, cNombre, cApellido, nDepartamentoID, nCargoID, nSalario, nEdad, cCorreo, cGenero, dFechaNacimiento) VALUES 
+insert into TEmpleado (cNif, cNombre, cApellido, nDepartamentoID, nCargoID, nSalario, nEdad, cCorreo, cGenero, dFechaNacimiento) values 
 ('1234', 'Roberto', 'Briones', 2, 3, 1300, 29, 'roberto.briones@empresa.com', 'M', '1997-01-20'),
 ('5678', 'Laura', 'Chávez', 5, 4, 850, 27, 'laura.chavez@empresa.com', 'F', '1998-11-12'),
 ('9012', 'Ricardo', 'Gutiérrez', 4, 2, 900, 42, 'ricardo.gutierrez@empresa.com', 'M', '1984-05-05');
 
-INSERT INTO TDepartamento (cNombreDepartamento) VALUES 
+insert into TDepartamento (cNombreDepartamento) values 
 ('Logística'), ('Auditoría Interna'), ('Seguridad');
 
--- Corregido: Se cambió de -500 a 350 para cumplir el CONSTRAINT ck_nSalario (>300)
-INSERT INTO TEmpleado (cNif, cNombre, cApellido, nDepartamentoID, nCargoID, nSalario, nEdad, cCorreo, cGenero, dFechaNacimiento) VALUES 
+insert into TEmpleado (cNif, cNombre, cApellido, nDepartamentoID, nCargoID, nSalario, nEdad, cCorreo, cGenero, dFechaNacimiento) values 
 ('0001', 'Frustrado', 'Error', 2, 3, 350, 25, 'error.salario@empresa.com', 'M', '2001-01-01');
-GO
+go
 
-INSERT INTO TSucursal (cNombreSucursal, cCiudad) VALUES 
+insert into TSucursal (cNombreSucursal, cCiudad) values 
 ('Sucursal Central', 'Managua'),
 ('Sucursal Norte', 'Estelí'),
 ('Sucursal Sur', 'Rivas');
 
-INSERT INTO TCliente (cNif, cNombre, cApellido, cCorreo, cTelefono, nEdad) VALUES
+insert into TCliente (cNif, cNombre, cApellido, cCorreo, cTelefono, nEdad) values
 ('C001', 'Juan', 'Pérez', 'juan.perez@email.com', '88881111', 25),
 ('C002', 'María', 'Gómez', 'maria.gomez@email.com', '88882222', 30),
 ('C003', 'Pedro', 'Martínez', 'pedro.m@email.com', '88883333', 45),
@@ -168,7 +162,7 @@ INSERT INTO TCliente (cNif, cNombre, cApellido, cCorreo, cTelefono, nEdad) VALUE
 ('C019', 'Ricardo', 'Chávez', 'ricardo.c@email.com', '77779999', 38),
 ('C020', 'Patricia', 'Herrera', 'patty.h@email.com', '77770000', 44);
 
-INSERT INTO TVenta (nClienteID, nSucursalID, dFechaVenta, nMontoTotal) VALUES
+insert into TVenta (nClienteID, nSucursalID, dFechaVenta, nMontoTotal) values
 (1, 1, '2026-01-05', 150), (2, 1, '2026-01-06', 200), (3, 2, '2026-01-10', 350), (4, 3, '2026-01-12', 90), (5, 1, '2026-01-15', 500),
 (6, 2, '2026-01-20', 120), (7, 3, '2026-01-22', 750), (8, 1, '2026-01-25', 300), (9, 2, '2026-02-02', 450), (10, 3, '2026-02-05', 180),
 (11, 1, '2026-02-08', 250), (12, 2, '2026-02-12', 600), (13, 3, '2026-02-15', 95), (14, 1, '2026-02-18', 400), (15, 2, '2026-02-22', 110),
@@ -179,172 +173,161 @@ INSERT INTO TVenta (nClienteID, nSucursalID, dFechaVenta, nMontoTotal) VALUES
 (18, 2, '2026-05-12', 340), (1, 3, '2026-05-15', 180), (2, 1, '2026-05-19', 290), (3, 2, '2026-05-22', 510), (4, 3, '2026-05-26', 125),
 (5, 1, '2026-06-01', 640), (6, 2, '2026-06-03', 215), (7, 3, '2026-06-05', 890), (8, 1, '2026-06-07', 410), (9, 2, '2026-06-08', 600),
 (10, 3, '2026-06-09', 320), (11, 1, '2026-06-10', 430), (12, 2, '2026-06-10', 750), (13, 3, '2026-06-10', 200), (14, 1, '2026-06-10', 550);
-GO
+go
 
+update TEmpleado set nSalario = nSalario * 1.10;
+update TEmpleado set nSalario = nSalario * 1.20 where nDepartamentoID = 2;
+update TEmpleado set cCorreo = 'carlos.m_nuevo@empresa.com' where nEmpleadoID = 1;
+update TEmpleado set nCargoID = 1 where nEmpleadoID = 3;
+update TEmpleado set nDepartamentoID = 3 where nEmpleadoID in (5, 6);
+update TEmpleado set bActivo = 0 where nSalario < 500;
+update TProyecto set FechaFinalizacion = '2026-08-15' where nProyectoID = 2;
+update TVenta set nMontoTotal = nMontoTotal * 1.10 where nSucursalID = 1;
+go
 
--- 5. OPERACIONES DE ACTUALIZACIÓN (UPDATES)
-UPDATE TEmpleado SET nSalario = nSalario * 1.10;
-UPDATE TEmpleado SET nSalario = nSalario * 1.20 WHERE nDepartamentoID = 2;
-UPDATE TEmpleado SET cCorreo = 'carlos.m_nuevo@empresa.com' WHERE nEmpleadoID = 1;
-UPDATE TEmpleado SET nCargoID = 1 WHERE nEmpleadoID = 3;
-UPDATE TEmpleado SET nDepartamentoID = 3 WHERE nEmpleadoID IN (5, 6);
-UPDATE TEmpleado SET bActivo = 0 WHERE nSalario < 500;
-UPDATE TProyecto SET FechaFinalizacion = '2026-08-15' WHERE nProyectoID = 2;
-UPDATE TVenta SET nMontoTotal = nMontoTotal * 1.10 WHERE nSucursalID = 1;
-GO
+insert into TEmpleadoProyecto (nEmpleadoID, nProyectoID) values (3, 3);
+go
 
-INSERT INTO TEmpleadoProyecto (nEmpleadoID, nProyectoID) VALUES (3, 3);
-GO
+delete from TEmpleadoProyecto where nEmpleadoID = (select nEmpleadoID from TEmpleado where cNif = '1111');
+delete from TEmpleado where cNif = '1111';
 
+delete from TEmpleadoProyecto where nEmpleadoID in (select nEmpleadoID from TEmpleado where bActivo = 0);
+delete from TEmpleado where bActivo = 0;
 
--- 6. OPERACIONES DE ELIMINACIÓN (DELETES)
-DELETE FROM TEmpleadoProyecto WHERE nEmpleadoID = (SELECT nEmpleadoID FROM TEmpleado WHERE cNif = '1111');
-DELETE FROM TEmpleado WHERE cNif = '1111';
+delete from TEmpleadoProyecto where nProyectoID = 2;
+delete from TProyecto where nProyectoID = 2;
 
-DELETE FROM TEmpleadoProyecto WHERE nEmpleadoID IN (SELECT nEmpleadoID FROM TEmpleado WHERE bActivo = 0);
-DELETE FROM TEmpleado WHERE bActivo = 0;
+delete from TEmpleadoProyecto where nEmpleadoID = 4;
 
-DELETE FROM TEmpleadoProyecto WHERE nProyectoID = 2;
-DELETE FROM TProyecto WHERE nProyectoID = 2;
-
-DELETE FROM TEmpleadoProyecto WHERE nEmpleadoID = 4;
-
-DELETE FROM TDepartamento WHERE nDepartamentoID NOT IN (
-    SELECT DISTINCT nDepartamentoID FROM TEmpleado WHERE nDepartamentoID IS NOT NULL
+delete from TDepartamento where nDepartamentoID not in (
+    select distinct nDepartamentoID from TEmpleado where nDepartamentoID is not null
 );
-DELETE FROM TCliente WHERE nClienteID NOT IN (SELECT DISTINCT nClienteID FROM TVenta);
-GO
+delete from TCliente where nClienteID not in (select distinct nClienteID from TVenta);
+go
 
+select * from TEmpleado order by cApellido asc;
+select * from TEmpleado where nSalario > 1000;
+select * from TEmpleado where bActivo = 1;
+select * from TEmpleado where year(dFechaContratacion) = year(getdate());
 
--- 7. CONSULTAS DE SELECCIÓN (SELECTS)
-SELECT * FROM TEmpleado ORDER BY cApellido ASC;
-SELECT * FROM TEmpleado WHERE nSalario > 1000;
-SELECT * FROM TEmpleado WHERE bActivo = 1;
-SELECT * FROM TEmpleado WHERE YEAR(dFechaContratacion) = YEAR(GETDATE());
+select e.*, d.cNombreDepartamento 
+from TEmpleado e
+inner join TDepartamento d on e.nDepartamentoID = d.nDepartamentoID;
 
-SELECT e.*, d.cNombreDepartamento 
-FROM TEmpleado e
-INNER JOIN TDepartamento d ON e.nDepartamentoID = d.nDepartamentoID;
+select e.*, c.cNombreCargo 
+from TEmpleado e
+inner join TCargo c on e.nCargoID = c.nCargoID;
 
-SELECT e.*, c.cNombreCargo 
-FROM TEmpleado e
-INNER JOIN TCargo c ON e.nCargoID = c.nCargoID;
+select distinct e.* from TEmpleado e
+inner join TEmpleadoProyecto ep on e.nEmpleadoID = ep.nEmpleadoID;
 
-SELECT DISTINCT e.* FROM TEmpleado e
-INNER JOIN TEmpleadoProyecto ep ON e.nEmpleadoID = ep.nEmpleadoID;
+select d.cNombreDepartamento, count(e.nEmpleadoID) as CantidadEmpleados
+from TDepartamento d
+left join TEmpleado e on d.nDepartamentoID = e.nDepartamentoID
+group by d.cNombreDepartamento;
 
-SELECT d.cNombreDepartamento, COUNT(e.nEmpleadoID) AS CantidadEmpleados
-FROM TDepartamento d
-LEFT JOIN TEmpleado e ON d.nDepartamentoID = e.nDepartamentoID
-GROUP BY d.cNombreDepartamento;
+select d.cNombreDepartamento, avg(e.nSalario) as SalarioPromedio
+from TDepartamento d
+inner join TEmpleado e on d.nDepartamentoID = e.nDepartamentoID
+group by d.cNombreDepartamento;
 
-SELECT d.cNombreDepartamento, AVG(e.nSalario) AS SalarioPromedio
-FROM TDepartamento d
-INNER JOIN TEmpleado e ON d.nDepartamentoID = e.nDepartamentoID
-GROUP BY d.cNombreDepartamento;
+select d.cNombreDepartamento, max(e.nSalario) as SalarioMaximo, min(e.nSalario) as SalarioMinimo
+from TDepartamento d
+inner join TEmpleado e on d.nDepartamentoID = e.nDepartamentoID
+group by d.cNombreDepartamento;
 
-SELECT d.cNombreDepartamento, MAX(e.nSalario) AS SalarioMaximo, MIN(e.nSalario) AS SalarioMinimo
-FROM TDepartamento d
-INNER JOIN TEmpleado e ON d.nDepartamentoID = e.nDepartamentoID
-GROUP BY d.cNombreDepartamento;
+select p.nombreProyecto, count(ep.nEmpleadoID) as CantidadEmpleados
+from TProyecto p
+inner join TEmpleadoProyecto ep on p.nProyectoID = ep.nProyectoID
+group by p.nombreProyecto
+having count(ep.nEmpleadoID) > 2;
 
-SELECT p.nombreProyecto, COUNT(ep.nEmpleadoID) AS CantidadEmpleados
-FROM TProyecto p
-INNER JOIN TEmpleadoProyecto ep ON p.nProyectoID = ep.nProyectoID
-GROUP BY p.nombreProyecto
-HAVING COUNT(ep.nEmpleadoID) > 2;
+select * from TEmpleado where cApellido like 'G%';
+select * from TEmpleado order by nSalario desc;
+select top 3 * from TEmpleado order by nSalario desc;
+select * from TEmpleado where nEdad between 25 and 40;
+select count(*) as TotalActivos from TEmpleado where bActivo = 1;
+select count(*) as TotalProyectos from TProyecto;
 
-SELECT * FROM TEmpleado WHERE cApellido LIKE 'G%';
-SELECT * FROM TEmpleado ORDER BY nSalario DESC;
-SELECT TOP 3 * FROM TEmpleado ORDER BY nSalario DESC;
-SELECT * FROM TEmpleado WHERE nEdad BETWEEN 25 AND 40;
-SELECT COUNT(*) AS TotalActivos FROM TEmpleado WHERE bActivo = 1;
-SELECT COUNT(*) AS TotalProyectos FROM TProyecto;
+select top 5 c.nClienteID, c.cNombre, c.cApellido, sum(v.nMontoTotal) as TotalComprado
+from TCliente c
+inner join TVenta v on c.nClienteID = v.nClienteID
+group by c.nClienteID, c.cNombre, c.cApellido
+order by TotalComprado desc;
 
-SELECT TOP 5 c.nClienteID, c.cNombre, c.cApellido, SUM(v.nMontoTotal) AS TotalComprado
-FROM TCliente c
-INNER JOIN TVenta v ON c.nClienteID = v.nClienteID
-GROUP BY c.nClienteID, c.cNombre, c.cApellido
-ORDER BY TotalComprado DESC;
+select year(dFechaVenta) as Anio, month(dFechaVenta) as Mes, sum(nMontoTotal) as TotalVentas, count(nVentaID) as CantidadVentas
+from TVenta
+group by year(dFechaVenta), month(dFechaVenta)
+order by Anio desc, Mes desc;
 
-SELECT YEAR(dFechaVenta) AS Anio, MONTH(dFechaVenta) AS Mes, SUM(nMontoTotal) AS TotalVentas, COUNT(nVentaID) AS CantidadVentas
-FROM TVenta
-GROUP BY YEAR(dFechaVenta), MONTH(dFechaVenta)
-ORDER BY Anio DESC, Mes DESC;
+select c.nClienteID, c.cNombre, c.cApellido, avg(v.nMontoTotal) as PromedioVenta
+from TCliente c
+inner join TVenta v on c.nClienteID = v.nClienteID
+group by c.nClienteID, c.cNombre, c.cApellido;
 
-SELECT c.nClienteID, c.cNombre, c.cApellido, AVG(v.nMontoTotal) AS PromedioVenta
-FROM TCliente c
-INNER JOIN TVenta v ON c.nClienteID = v.nClienteID
-GROUP BY c.nClienteID, c.cNombre, c.cApellido;
+select v.nVentaID, v.dFechaVenta, v.nMontoTotal, c.cNombre + ' ' + c.cApellido as Cliente, s.cNombreSucursal as Sucursal
+from TVenta v
+inner join TCliente c on v.nClienteID = c.nClienteID
+inner join TSucursal s on v.nSucursalID = s.nSucursalID;
+go
 
-SELECT v.nVentaID, v.dFechaVenta, v.nMontoTotal, c.cNombre + ' ' + c.cApellido AS Cliente, s.cNombreSucursal AS Sucursal
-FROM TVenta v
-INNER JOIN TCliente c ON v.nClienteID = c.nClienteID
-INNER JOIN TSucursal s ON v.nSucursalID = s.nSucursalID;
-GO
+alter table TEmpleado 
+drop constraint ck_TEmpleado_nEdad;
+go
 
---admin
-ALTER TABLE TEmpleado 
-DROP CONSTRAINT ck_TEmpleado_nEdad;
-GO
+alter table TEmpleado 
+drop constraint uk_TEmpleado_cCorreo;
+go
 
-ALTER TABLE TEmpleado 
-DROP CONSTRAINT uk_TEmpleado_cCorreo;
-GO
+alter table TEmpleado 
+add constraint ck_TEmpleado_nEdad check (nEdad between 18 and 65);
 
-ALTER TABLE TEmpleado 
-ADD CONSTRAINT ck_TEmpleado_nEdad CHECK (nEdad BETWEEN 18 AND 65);
+alter table TEmpleado 
+add constraint uk_TEmpleado_cCorreo unique (cCorreo);
+go
 
-ALTER TABLE TEmpleado 
-ADD CONSTRAINT uk_TEmpleado_cCorreo UNIQUE (cCorreo);
-GO
+drop table TEmpleadoProyecto;
+go
 
+drop table TProyecto;
+go
 
+drop table TEmpleado;
+go
 
-DROP TABLE TEmpleadoProyecto;
-GO
+drop table TCargo;
+go
 
-DROP TABLE TProyecto;
-GO
+drop table TDepartamento;
+go
 
-DROP TABLE TEmpleado;
-GO
+drop table TSucursal;
+go
 
-DROP TABLE TCargo;
-GO
-
-DROP TABLE TDepartamento;
-GO
-
-DROP TABLE TSucursal;
-GO
-
---desafios
-
-CREATE TABLE TCliente(
-    nClienteID INT IDENTITY(1,1) CONSTRAINT pk_TClienteID PRIMARY KEY,
-    cNif NVARCHAR(15) NOT NULL CONSTRAINT uk_TCliente_cNif UNIQUE,
-    cNombre NVARCHAR(50) NOT NULL,
-    cApellido NVARCHAR(50) NOT NULL,
-    cCorreo NVARCHAR(100) CONSTRAINT uk_TCliente_cCorreo UNIQUE,
-    cTelefono NVARCHAR(20),
-    nEdad INT CONSTRAINT ck_TCliente_nEdad CHECK(nEdad >= 18),
-    dFechaRegistro DATE CONSTRAINT df_TCliente_dFechaRegistro DEFAULT GETDATE()
+create table TCliente(
+    nClienteID int identity(1,1) constraint pk_TClienteID primary key,
+    cNif nvarchar(15) not null constraint uk_TCliente_cNif unique,
+    cNombre nvarchar(50) not null,
+    cApellido nvarchar(50) not null,
+    cCorreo nvarchar(100) constraint uk_TCliente_cCorreo unique,
+    cTelefono nvarchar(20),
+    nEdad int constraint ck_TCliente_nEdad check(nEdad >= 18),
+    dFechaRegistro date constraint df_TCliente_dFechaRegistro default getdate()
 );
-GO
+go
 
-CREATE TABLE TVenta(
-    nVentaID INT IDENTITY(1,1) CONSTRAINT pk_nVentaID PRIMARY KEY,
-    nClienteID INT,
-    nSucursalID INT,
-    dFechaVenta DATETIME CONSTRAINT df_TVenta_dFechaVenta DEFAULT GETDATE(),
-    nMontoTotal INT CONSTRAINT ck_TVenta_nMontoTotal CHECK(nMontoTotal > 0),
-    CONSTRAINT fk_TVenta_TCliente FOREIGN KEY (nClienteID) REFERENCES TCliente(nClienteID),
-    CONSTRAINT fk_TVenta_TSucursal FOREIGN KEY (nSucursalID) REFERENCES TSucursal(nSucursalID)
+create table TVenta(
+    nVentaID int identity(1,1) constraint pk_nVentaID primary key,
+    nClienteID int,
+    nSucursalID int,
+    dFechaVenta datetime constraint df_TVenta_dFechaVenta default getdate(),
+    nMontoTotal int constraint ck_TVenta_nMontoTotal check(nMontoTotal > 0),
+    constraint fk_TVenta_TCliente foreign key (nClienteID) references TCliente(nClienteID),
+    constraint fk_TVenta_TSucursal foreign key (nSucursalID) references TSucursal(nSucursalID)
 );
-GO
+go
 
-INSERT INTO TCliente (cNif, cNombre, cApellido, cCorreo, cTelefono, nEdad) VALUES
+insert into TCliente (cNif, cNombre, cApellido, cCorreo, cTelefono, nEdad) values
 ('C001', 'Juan', 'Pérez', 'juan.perez@email.com', '88881111', 25),
 ('C002', 'María', 'Gómez', 'maria.gomez@email.com', '88882222', 30),
 ('C003', 'Pedro', 'Martínez', 'pedro.m@email.com', '88883333', 45),
@@ -365,9 +348,9 @@ INSERT INTO TCliente (cNif, cNombre, cApellido, cCorreo, cTelefono, nEdad) VALUE
 ('C018', 'Gabriela', 'Espinoza', 'gaby.e@email.com', '77778888', 26),
 ('C019', 'Ricardo', 'Chávez', 'ricardo.c@email.com', '77779999', 38),
 ('C020', 'Patricia', 'Herrera', 'patty.h@email.com', '77770000', 44);
-GO
+go
 
-INSERT INTO TVenta (nClienteID, nSucursalID, dFechaVenta, nMontoTotal) VALUES
+insert into TVenta (nClienteID, nSucursalID, dFechaVenta, nMontoTotal) values
 (1, 1, '2026-01-05', 150), (2, 1, '2026-01-06', 200), (3, 2, '2026-01-10', 350), (4, 3, '2026-01-12', 90), (5, 1, '2026-01-15', 500),
 (6, 2, '2026-01-20', 120), (7, 3, '2026-01-22', 750), (8, 1, '2026-01-25', 300), (9, 2, '2026-02-02', 450), (10, 3, '2026-02-05', 180),
 (11, 1, '2026-02-08', 250), (12, 2, '2026-02-12', 600), (13, 3, '2026-02-15', 95), (14, 1, '2026-02-18', 400), (15, 2, '2026-02-22', 110),
@@ -378,38 +361,38 @@ INSERT INTO TVenta (nClienteID, nSucursalID, dFechaVenta, nMontoTotal) VALUES
 (18, 2, '2026-05-12', 340), (1, 3, '2026-05-15', 180), (2, 1, '2026-05-19', 290), (3, 2, '2026-05-22', 510), (4, 3, '2026-05-26', 125),
 (5, 1, '2026-06-01', 640), (6, 2, '2026-06-03', 215), (7, 3, '2026-06-05', 890), (8, 1, '2026-06-07', 410), (9, 2, '2026-06-08', 600),
 (10, 3, '2026-06-09', 320), (11, 1, '2026-06-10', 430), (12, 2, '2026-06-10', 750), (13, 3, '2026-06-10', 200), (14, 1, '2026-06-10', 550);
-GO
+go
 
-UPDATE TVenta
-SET nMontoTotal = nMontoTotal * 1.10
-WHERE nSucursalID = 1;
-GO
+update TVenta
+set nMontoTotal = nMontoTotal * 1.10
+where nSucursalID = 1;
+go
 
-DELETE FROM TCliente
-WHERE nClienteID NOT IN (SELECT DISTINCT nClienteID FROM TVenta);
-GO
+delete from TCliente
+where nClienteID not in (select distinct nClienteID from TVenta);
+go
 
-SELECT TOP 5 c.nClienteID, c.cNombre, c.cApellido, SUM(v.nMontoTotal) AS TotalComprado
-FROM TCliente c
-INNER JOIN TVenta v ON c.nClienteID = v.nClienteID
-GROUP BY c.nClienteID, c.cNombre, c.cApellido
-ORDER BY TotalComprado DESC;
-GO
+select top 5 c.nClienteID, c.cNombre, c.cApellido, sum(v.nMontoTotal) as TotalComprado
+from TCliente c
+inner join TVenta v on c.nClienteID = v.nClienteID
+group by c.nClienteID, c.cNombre, c.cApellido
+order by TotalComprado desc;
+go
 
-SELECT YEAR(dFechaVenta) AS Anio, MONTH(dFechaVenta) AS Mes, SUM(nMontoTotal) AS TotalVentas, COUNT(nVentaID) AS CantidadVentas
-FROM TVenta
-GROUP BY YEAR(dFechaVenta), MONTH(dFechaVenta)
-ORDER BY Anio DESC, Mes DESC;
-GO
+select year(dFechaVenta) as Anio, month(dFechaVenta) as Mes, sum(nMontoTotal) as TotalVentas, count(nVentaID) as CantidadVentas
+from TVenta
+group by year(dFechaVenta), month(dFechaVenta)
+order by Anio desc, Mes desc;
+go
 
-SELECT c.nClienteID, c.cNombre, c.cApellido, AVG(v.nMontoTotal) AS PromedioVenta
-FROM TCliente c
-INNER JOIN TVenta v ON c.nClienteID = v.nClienteID
-GROUP BY c.nClienteID, c.cNombre, c.cApellido;
-GO
+select c.nClienteID, c.cNombre, c.cApellido, avg(v.nMontoTotal) as PromedioVenta
+from TCliente c
+inner join TVenta v on c.nClienteID = v.nClienteID
+group by c.nClienteID, c.cNombre, c.cApellido;
+go
 
-SELECT v.nVentaID, v.dFechaVenta, v.nMontoTotal, c.cNombre + ' ' + c.cApellido AS Cliente, s.cNombreSucursal AS Sucursal
-FROM TVenta v
-INNER JOIN TCliente c ON v.nClienteID = c.nClienteID
-INNER JOIN TSucursal s ON v.nSucursalID = s.nSucursalID;
-GO
+select v.nVentaID, v.dFechaVenta, v.nMontoTotal, c.cNombre + ' ' + c.cApellido as Cliente, s.cNombreSucursal as Sucursal
+from TVenta v
+inner join TCliente c on v.nClienteID = c.nClienteID
+inner join TSucursal s on v.nSucursalID = s.nSucursalID;
+go
