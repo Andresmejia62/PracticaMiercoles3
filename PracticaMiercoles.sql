@@ -1,398 +1,465 @@
-use master
+if exists(select name from sys.databases where name = 'HospitalDB')
+	begin 
+	drop database HospitalDB
+	end
 go
 
-if exists (select name from sys.databases where name = 'EmpresaSQL')
-begin 
-    drop database EmpresaSQL
+create database HospitalDB
+go
+
+select * from sys.databases
+
+use HospitalDB
+go
+
+create table Especialidades(
+	Idespecialidad int identity(1,1) constraint pk_Idespecialidad primary key,
+	nombre nvarchar(70) constraint ck_nombre check (nombre IN (
+    'Neurocirugía', 'Cardiología', 'Urología', 'Oftalmología', 
+    'Pediatría', 'Dermatología', 'Ginecología', 'Obstetricia', 
+    'Oncología', 'Psiquiatría', 'Traumatología', 'Ortopedia', 
+    'Gastenterología', 'Neumología', 'Nefrología', 'Neurología', 
+    'Endocrinología', 'Infectología', 'Hematología', 'Reumatología', 
+    'Anestesiología', 'Radiología', 'Patología', 'Otorrinolaringología', 
+    'Fisiatría', 'Geriatría', 'Medicina Interna', 'Medicina General', 
+    'Cirugía General', 'Cirugía Plástica', 'Inmunología', 'Alergología')
+	),
+	is_active bit constraint df_Especialidades_is_active default 1,
+	created_at datetime constraint df_Especialidades_created_at default getdate(),
+	updated_at datetime null,
+	deleted_at datetime null
+	);
+
+create table Habitaciones(
+	Idhabitacion int identity(1,1) constraint pk_Idhabitacion primary key,
+	is_active bit constraint df_Habitaciones_is_active default 1,
+	created_at datetime constraint df_Habitaciones_created_at default getdate(),
+	updated_at datetime null,
+	deleted_at datetime null
+	);
+
+create table Medicamentos(
+	Idmedicamento int identity (1,1) constraint pk_Idmedicamento primary key,
+	nombre nvarchar(40) not null,
+	descripcion nvarchar(max) not null,
+	vencimiento datetime not null,
+	is_active bit constraint df_Medicamentos_is_active default 1,
+	created_at datetime constraint df_Medicamentos_created_at default getdate(),
+	updated_at datetime null,
+	deleted_at datetime null
+	);
+
+create table Tratamientos(
+	Idtratamiento int identity (1,1) constraint pk_Idtratamiento primary key,
+	Inicio_tratamiento datetime not null,
+	fin_tratamiento datetime not null,
+	Idmedicamento int,
+	constraint fk_Idmedicamento foreign key (Idmedicamento) references Medicamentos(Idmedicamento),
+	is_active bit constraint df_Tratamientos_is_active default 1,
+	created_at datetime constraint df_Tratamientos_created_at default getdate(),
+	updated_at datetime null,
+	deleted_at datetime null,
+	);
+
+
+create table Pacientes(
+	Idpaciente int identity (1,1) constraint pk_Idpaciente primary key,
+	nombre nvarchar(40) not null,
+	apellido nvarchar(40) not null,
+	cedula nvarchar (14) constraint ck_cedula check (len(cedula) = 14),
+	fechaNacimiento datetime not null,
+	edad int not null constraint ck_edad check (edad > 0),
+	ciudad nvarchar(50) not null,
+	direccion nvarchar(max) not null,
+	correo nvarchar(40) constraint uk_correo unique,
+	Idhabitacion int constraint fk_IdHabitacion foreign key (IdHabitacion) references Habitaciones(IdHabitacion),
+	Idtratamiento int constraint fk_Idtratamiento foreign key(Idtratamiento) references Tratamientos(Idtratamiento),
+	is_active bit constraint df_Pacientes_is_active default 1,
+	created_at datetime constraint df_Pacientes_created_at default getdate(),
+	updated_at datetime null,
+	deleted_at datetime null,
+	);
+
+create table Medicos(
+	Idmedico int identity (1,1) constraint pk_Idmedico primary key,
+	nombre nvarchar(40) not null,
+	apellido nvarchar(40) not null,
+	cedula nvarchar (14) constraint ck_cedula check (len(cedula) = 14),
+	fechaNacimiento datetime not null,
+	edad int not null constraint ck_edad check (edad > 0),
+	ciudad nvarchar(50) not null,
+	direccion nvarchar(max) not null,
+	correo nvarchar(40) constraint uk_correo unique,
+	Idespecialidad int constraint fk_Idespecialidad foreign key (Idespecialidad) references Especialidades(Idespecialidad),
+	salario int not null constraint ck_salario check(salario > 0),
+	is_active bit constraint df_Medicos_is_active default 1,
+	created_at datetime constraint df_Medicos_created_at default getdate(),
+	updated_at datetime null,
+	deleted_at datetime null,
+	);
+
+create table Citas(
+	Idcita int identity (1,1) constraint pk_Idcita primary key,
+	fecha datetime not null,
+	Idpaciente int,
+	IdMedico int,
+	constraint fk_Idpaciente foreign key (Idpaciente) references Pacientes(Idpaciente),
+	constraint fk_Idmedico foreign key (Idmedico) references Medicos(Idmedico),
+	is_active bit constraint df_Citas_is_active default 1,
+	created_at datetime constraint df_Citas_created_at default getdate(),
+	updated_at datetime null,
+	deleted_at datetime null,
+	);
+
+
+alter table Pacientes add telefono nvarchar(20) null;
+go
+
+
+alter table Pacientes add direccion_secundaria nvarchar(max) null;
+go
+
+alter table Pacientes add genero varchar(10) null;
+go
+
+alter table Pacientes add tipo_sangre varchar(5) null;
+go
+
+alter table Pacientes add fecha_registro_nacimiento date null;
+go
+
+alter table Pacientes alter column nombre nvarchar(60) not null;
+go
+
+alter table Pacientes alter column direccion nvarchar(max) not null;
+go
+
+alter table Medicos add experiencia_anios int null;
+go
+
+alter table Medicos add turno varchar(20) null;
+go
+
+alter table Citas add observaciones nvarchar(max) null;
+go
+
+alter table Citas drop column observaciones;
+go
+
+alter table Citas add estado varchar(20) null;
+go
+
+alter table Citas add costo_consulta int null;
+go
+
+alter table Citas alter column costo_consulta decimal(10,2) null;
+go
+
+alter table Habitaciones add disponibilidad bit constraint df_Habitaciones_disponibilidad default 1;
+go
+
+--drops
+
+if object_id('tempdb..#tabla_temporal') is not null
+begin
+    drop table #tabla_temporal;
 end
 go
 
-create database EmpresaSQL
+alter table Pacientes drop constraint ck_Pacientes_edad;
 go
 
-use EmpresaSQL
+alter table Pacientes drop constraint uk_Pacientes_correo;
 go
 
-create table TDepartamento (
-    nDepartamentoID int identity(1,1) constraint pk_nDepartamentoID primary key,
-    cNombreDepartamento nvarchar(50) not null constraint uk_cNombreDepartamento unique
+alter table Pacientes drop column ciudad;
+go
+
+if exists (select * from sys.objects where object_id = object_id('tablaprebas') and type = 'u')
+begin
+    drop table tablaprebas;
+end
+go
+
+create table Auditoria(
+    Idauditoria int identity(1,1) constraint pk_Auditoria primary key,
+    tabla_afectada varchar(50),
+    accion varchar(20),
+    fecha datetime default getdate()
 );
 go
 
-create table TCargo (
-    nCargoID int identity(1,1) constraint pk_nCargoID primary key,
-    cNombreCargo nvarchar(50) not null constraint uk_cNombreCargo unique
+drop table Auditoria;
+go
+
+create table Logs(
+    Idlog int identity(1,1) constraint pk_Logs primary key,
+    descripcion nvarchar(max),
+    fecha_log datetime default getdate()
 );
 go
 
-create table TProyecto (
-    nProyectoID int identity(1,1) constraint pk_nProyectoID primary key,
-    nombreProyecto nvarchar(60) not null,
-    FechaInicio datetime not null,
-    FechaFinalizacion datetime
+drop table Logs;
+go
+
+alter table Pacientes drop constraint fk_Pacientes_Habitacion;
+go
+
+create table MedicamentosPrueba(
+    Idmedicamento int primary key,
+    nombre varchar(50)
 );
 go
 
-create table TSucursal (
-    nSucursalID int identity(1,1) constraint pk_TSucursalID primary key,
-    cNombreSucursal nvarchar(100) not null constraint uk_cNombreSucursal unique,
-    cCiudad nvarchar(50) not null,
-    bActivo bit constraint df_TSucursal_bActivo default 1
+drop table MedicamentosPrueba;
+go
+
+use master;
+go
+
+if exists(select name from sys.databases where name = 'hospitaldb_pruebas')
+begin
+    drop database hospitaldb_pruebas;
+end
+go
+
+use HospitalDB;
+go
+
+--inserts
+insert into Especialidades (nombre) values 
+('Cardiología'),('Pediatría'),('Dermatología'),('Neurología'),('Ginecología');
+go
+
+insert into Habitaciones (is_active) values 
+(1), (1), (1), (1), (1), (1), (1), (1), (1), (1);
+go
+
+insert into Medicamentos (nombre, descripcion, vencimiento) values 
+('Paracetamol', 'Analgésico y antipirético', '2028-12-31'),
+('Ibuprofeno', 'Antiinflamatorio no esteroideo', '2028-06-30'),
+('Amoxicilina', 'Antibiótico de amplio espectro', '2027-05-15'),
+('Omeprazol', 'Protector gástrico', '2029-01-20'),
+('Losartán', 'Antihipertensivo', '2028-09-10'),
+('Metformina', 'Antidiabético oral', '2028-11-25'),
+('Atorvastatina', 'Para regular el colesterol', '2027-08-14'),
+('Aspirina', 'Antiagregante plaquetario', '2029-03-05'),
+('Salbutamol', 'Broncodilatador en aerosol', '2027-10-22'),
+('Loratadina', 'Antihistamínico para alergias', '2028-04-18'),
+('Clonazepam', 'Ansiolítico y anticonvulsivante', '2027-12-01'),
+('Enalapril', 'Inhibidor de la ECA para presión', '2028-07-19'),
+('Diclofenaco', 'Analgésico y antiinflamatorio', '2027-03-11'),
+('Sertralina', 'Antidepresivo', '2029-05-30'),
+('Azitromicina', 'Antibiótico macrólido', '2027-06-24'),
+('Tramadol', 'Analgésico opioide', '2028-02-15'),
+('Ranitidina', 'Antagonista H2 para la acidez', '2027-09-09'),
+('Fluoxetina', 'Antidepresivo ISRS', '2028-10-05'),
+('Pantoprazol', 'Inhibidor de la bomba de protones', '2029-02-28'),
+('Simvastatina', 'Hipolipemiante', '2027-11-12');
+go
+
+insert into Tratamientos (Inicio_tratamiento, fin_tratamiento, Idmedicamento) values 
+('2026-05-01', '2026-06-15', 1),
+('2026-05-20', '2026-07-20', 2),
+('2026-06-01', '2026-06-07', 3),
+('2026-06-02', '2026-08-02', 4),
+('2026-05-15', '2026-11-15', 5),
+('2025-01-10', '2025-02-10', 6),
+('2025-03-15', '2025-04-15', 7),
+('2025-06-01', '2025-06-10', 8),
+('2025-09-20', '2025-10-20', 9),
+('2025-12-01', '2025-12-15', 10);
+go
+
+insert into Pacientes (nombre, apellido, cedula, fechaNacimiento, edad, ciudad, direccion, correo, Idhabitacion, Idtratamiento) values 
+('Juan', 'Pérez', '001-010190-000A', '1990-05-12', 36, 'Managua', 'De los semáforos 2c al norte', 'juan.perez@email.com', 1, 1),
+('María', 'López', '001-150885-000B', '1985-08-15', 40, 'Managua', 'Colonia Centroamérica casa M4', 'maria.lopez@email.com', 2, 2),
+('Carlos', 'García', '002-231195-000C', '1995-11-23', 30, 'León', 'Barrio El Laborío', 'carlos.garcia@email.com', 3, 3),
+('Ana', 'Martínez', '003-040288-000D', '1988-02-04', 38, 'Granada', 'Calle El Caimito', 'ana.martinez@email.com', 4, 4),
+('Luis', 'Rodríguez', '001-121275-000E', '1975-12-12', 50, 'Managua', 'Bello Horizonte E-II', 'luis.rodriguez@email.com', 5, 5),
+('Elena', 'Gómez', '201-300492-000F', '1992-04-30', 34, 'Estelí', 'Barrio El Rosario', 'elena.gomez@email.com', 6, 6),
+('Pedro', 'Sánchez', '001-250780-000G', '1980-07-25', 45, 'Managua', 'Altamira d`este N-12', 'pedro.sanchez@email.com', 7, 7),
+('Sofía', 'Díaz', '161-140298-000H', '1998-02-14', 28, 'Matagalpa', 'Barrio Guanuca', 'sofia.diaz@email.com', 8, 8),
+('Diego', 'Torres', '001-090965-000I', '1965-09-09', 60, 'Managua', 'Ciudad Jardín Q-8', 'diego.torres@email.com', 9, 9),
+('Lucía', 'Ramírez', '041-180693-000J', '1993-06-18', 32, 'Chinandega', 'Barrio Santa Ana', 'lucia.ramirez@email.com', 10, 10),
+('Jorge', 'Vargas', '001-221082-000K', '1982-10-22', 43, 'Managua', 'Linda Vista Sur casa 45', 'jorge.vargas@email.com', 1, 1),
+('Laura', 'Castro', '002-050591-000L', '1991-05-05', 35, 'León', 'Barrio Sutiaba', 'laura.castro@email.com', 2, 2),
+('Andrés', 'Morales', '003-191187-000M', '1987-11-19', 38, 'Granada', 'Calle Real Xalteva', 'andres.morales@email.com', 3, 3),
+('Claudia', 'Ortiz', '001-110179-000N', '1979-01-11', 47, 'Managua', 'Bolonia frente al canal', 'claudia.ortiz@email.com', 4, 4),
+('Ricardo', 'Mendoza', '321-270396-000O', '1996-03-27', 30, 'Masaya', 'Barrio Monimbó', 'ricardo.mendoza@email.com', 5, 5),
+('Natalia', 'Silva', '001-080884-000P', '1984-08-08', 41, 'Managua', 'Reparto Schick', 'natalia.silva@email.com', 6, 6),
+('Gabriel', 'Reyes', '041-151289-000Q', '1989-12-15', 36, 'Chinandega', 'Barrio El Calvario', 'gabriel.reyes@email.com', 7, 7),
+('Valentina', 'Espinoza', '161-210794-000R', '1994-07-21', 31, 'Matagalpa', 'Barrio Apante', 'valentina.espinoza@email.com', 8, 8),
+('Mateo', 'Jiménez', '001-030370-000S', '1970-03-03', 56, 'Managua', 'Monseñor Lezcano', 'mateo.jimenez@email.com', 9, 9),
+('Camila', 'Herrera', '201-121297-000T', '1997-12-12', 28, 'Estelí', 'Barrio Central', 'camila.herrera@email.com', 10, 10);
+go
+
+insert into Medicos (nombre, apellido, cedula, fechaNacimiento, edad, ciudad, direccion, correo, Idespecialidad, salario) values 
+('Roberto', 'Briones', '001-120478-000A', '1978-04-12', 48, 'Managua', 'Los Robles R-5', 'roberto.briones@email.com', 1, 85000),
+('Alejandra', 'Solís', '001-240981-000B', '1981-09-24', 44, 'Managua', 'Carretera a Masaya km 10', 'alejandra.solis@email.com', 2, 75000),
+('Fernando', 'Meléndez', '002-150672-000C', '1972-06-15', 53, 'León', 'Frente a la iglesia La Recolección', 'fernando.melendez@email.com', 3, 80000),
+('Adriana', 'Gutiérrez', '001-030385-000D', '1985-03-03', 41, 'Managua', 'Villa Fontana Sur', 'adriana.gutierrez@email.com', 4, 90000),
+('Manuel', 'Duarte', '003-181176-000E', '1976-11-18', 49, 'Granada', 'Calle La Calzada', 'manuel.duarte@email.com', 5, 78000),
+('Patricia', 'Salinas', '001-090983-000F', '1983-09-09', 42, 'Managua', 'Las Colinas Pasaje 3', 'patricia.salinas@email.com', 1, 87000),
+('Francisco', 'Rizo', '161-220270-000G', '1970-02-22', 56, 'Matagalpa', 'Frente al parque central', 'francisco.rizo@email.com', 2, 76000),
+('Diana', 'Montenegro', '001-140787-000H', '1987-07-14', 38, 'Managua', 'Bello Horizonte F-IV', 'diana.montenegro@email.com', 3, 81000),
+('Héctor', 'Palacios', '201-050574-000I', '1974-05-05', 52, 'Estelí', 'Salida sur 1c al oeste', 'hector.palacios@email.com', 4, 93000),
+('Gabriela', 'Blanco', '041-301180-000J', '1980-11-30', 45, 'Chinandega', 'Reparto Los Encuentros', 'gabriela.blanco@email.com', 5, 79000);
+go
+
+insert into Citas (fecha, Idpaciente, IdMedico) values 
+('2026-06-03 08:30:00', 1, 1),
+('2026-06-03 10:00:00', 2, 2),
+('2026-06-03 11:30:00', 3, 3),
+('2026-06-03 14:00:00', 4, 4),
+('2026-06-03 15:30:00', 5, 5),
+('2026-07-10 09:00:00', 6, 6),
+('2026-07-15 10:30:00', 7, 7),
+('2026-08-20 08:00:00', 8, 8),
+('2026-08-22 13:00:00', 9, 9),
+('2026-09-05 15:00:00', 10, 10),
+('2026-10-01 11:00:00', 11, 1),
+('2026-10-12 14:30:00', 12, 2),
+('2026-11-04 09:30:00', 13, 3),
+('2026-11-20 10:00:00', 14, 4),
+('2026-12-01 16:00:00', 15, 5);
+go
+
+update Habitaciones set is_active = 0 where Idhabitacion in (1, 2, 3, 4, 5);
+update Habitaciones set is_active = 1 where Idhabitacion in (6, 7, 8, 9, 10);
+go
+
+update Pacientes 
+set telefono = '+505 8888-8888' 
+where Idpaciente = 1;
+go
+
+update Pacientes 
+set direccion = 'Altamira, de la Vicky 2c al sur' 
+where Idpaciente = 1;
+go
+
+update Medicos 
+set salario = 95000 
+where Idmedico = 1;
+go
+
+update Medicos 
+set turno = 'Nocturno' 
+where Idmedico = 1;
+go
+
+update Citas 
+set estado = 'Completada' 
+where Idcita = 1;
+go
+
+update Citas 
+set costo_consulta = 1500.00 
+where Idcita = 1;
+go
+
+update Especialidades 
+set nombre = 'Neurocirugía' 
+where Idespecialidad = 1;
+go
+
+update Habitaciones 
+set disponibilidad = 0 
+where Idhabitacion = 1;
+go
+
+-- 9
+update Tratamientos 
+set fin_tratamiento = '2026-08-30' 
+where Idtratamiento = 1;
+go
+
+update Medicamentos 
+set descripcion = 'Analgésico y antipirético de 500mg' 
+where Idmedicamento = 1;
+go
+
+update Pacientes 
+set correo = 'juan.nuevo_correo@email.com' 
+where Idpaciente = 1;
+go
+
+update Medicos 
+set correo = 'roberto.nuevo_medico@email.com' 
+where Idmedico = 1;
+go
+
+update Citas 
+set fecha = '2026-06-15 09:00:00' 
+where Idcita = 1;
+go
+
+update Medicos 
+set experiencia_anios = 15 
+where Idmedico = 1;
+go
+
+update Pacientes 
+set tipo_sangre = 'O+' 
+where Idpaciente = 1;
+go
+
+--delete
+
+delete from Pacientes 
+where Idpaciente = 20;
+go
+
+delete from Citas 
+where Idcita = 15;
+go
+
+update Tratamientos set Idmedicamento = null where Idmedicamento = 20;
+delete from Medicamentos 
+where Idmedicamento = 20;
+go
+
+update Pacientes set Idhabitacion = null where Idhabitacion = 10;
+delete from Habitaciones 
+where Idhabitacion = 10;
+go
+
+update Pacientes set Idtratamiento = null where Idtratamiento = 10;
+delete from Tratamientos 
+where Idtratamiento = 10;
+go
+
+delete from Citas 
+where is_active = 0;
+go
+
+delete from Pacientes 
+where Idpaciente not in (
+    select distinct Idpaciente 
+    from Citas 
+    where Idpaciente is not null
 );
 go
 
-create table TCliente (
-    nClienteID int identity(1,1) constraint pk_TClienteID primary key,
-    cNif nvarchar(15) not null constraint uk_TCliente_cNif unique,
-    cNombre nvarchar(50) not null,
-    cApellido nvarchar(50) not null,
-    cCorreo nvarchar(100) constraint uk_TCliente_cCorreo unique,
-    cTelefono nvarchar(20),
-    nEdad int constraint ck_TCliente_nEdad check(nEdad >= 18),
-    dFechaRegistro date constraint df_TCliente_dFechaRegistro default getdate()
+delete from Habitaciones 
+where is_active = 1 
+and Idhabitacion not in (
+    select distinct Idhabitacion 
+    from Pacientes 
+    where Idhabitacion is not null
 );
 go
 
-create table TEmpleado (
-    nEmpleadoID int identity(1,1) constraint pk_nEmpleadoID primary key,
-    cNif nvarchar(15) not null constraint uk_cNif unique,
-    cNombre nvarchar(100),
-    cApellido nvarchar(100),
-    nDepartamentoID int,
-    nCargoID int,
-    dFechaContratacion datetime constraint df_dFechaContratacion default getdate(),
-    nSalario int constraint ck_nSalario check(nSalario > 300),
-    cEmail nvarchar(60) null,
-    cTelefono nvarchar(8),
-    CDireccion nvarchar(70),
-    nEdad int constraint ck_TEmpleado_nEdad check (nEdad between 18 and 65),
-    cCorreo nvarchar(100) null,
-    bActivo bit constraint df_TEmpleado_bActivo default 1,
-    telefono varchar(20),
-    cGenero char(1) constraint ck_TEmpleado_cGenero check (cGenero in ('M', 'F')),
-    dFechaNacimiento date,
-
-    constraint fk_TEmpleado_TDepartamento foreign key (nDepartamentoID) references TDepartamento(nDepartamentoID),
-    constraint fk_TEmpleado_TCargo foreign key (nCargoID) references TCargo(nCargoID)
-);
+delete from Medicamentos 
+where vencimiento < getdate();
 go
 
-create table TEmpleadoProyecto (
-    nEmpleadoID int,
-    nProyectoID int,
-    constraint pk_TEmpleadoProyecto primary key (nEmpleadoID, nProyectoID),
-    constraint fk_TEmpleadoProyecto_Empleado foreign key (nEmpleadoID) references TEmpleado(nEmpleadoID),
-    constraint fk_TEmpleadoProyecto_Proyecto foreign key (nProyectoID) references TProyecto(nProyectoID)
-);
-go
-
-create table TVenta (
-    nVentaID int identity(1,1) constraint pk_nVentaID primary key,
-    nClienteID int,
-    nSucursalID int,
-    dFechaVenta datetime constraint df_TVenta_dFechaVenta default getdate(),
-    nMontoTotal int constraint ck_TVenta_nMontoTotal check(nMontoTotal > 0),
-    constraint fk_TVenta_TCliente foreign key (nClienteID) references TCliente(nClienteID),
-    constraint fk_TVenta_TSucursal foreign key (nSucursalID) references TSucursal(nSucursalID)
-);
-go
-
-insert into TDepartamento (cNombreDepartamento) values 
-('Recursos Humanos'), ('Tecnología'), ('Finanzas'), ('Operaciones'), ('Mercadeo');
-
-insert into TCargo (cNombreCargo) values 
-('Gerente'), ('Analista'), ('Desarrollador'), ('Coordinador'), ('Asistente');
-
-insert into TEmpleado (cNif, cNombre, cApellido, nDepartamentoID, nCargoID, nSalario, nEdad, cCorreo, cGenero, dFechaNacimiento) values 
-('1111', 'Carlos', 'Mendoza', 2, 3, 1200, 35, 'carlos.mendoza@empresa.com', 'M', '1991-04-12'),
-('2222', 'Ana', 'Silva', 1, 1, 2500, 33, 'ana.silva@empresa.com', 'F', '1993-08-25'),
-('3333', 'Jorge', 'Reyes', 3, 2, 950, 37, 'jorge.reyes@empresa.com', 'M', '1988-11-05'),
-('4444', 'Elena', 'Gómez', 2, 3, 1100, 30, 'elena.gomez@empresa.com', 'F', '1995-02-14'),
-('5555', 'Luis', 'Torres', 4, 4, 800, 40, 'luis.torres@empresa.com', 'M', '1985-06-30'),
-('6666', 'Sofía', 'Castro', 5, 2, 900, 32, 'sofia.castro@empresa.com', 'F', '1993-10-18'),
-('7777', 'Pedro', 'Martínez', 3, 1, 2300, 45, 'pedro.martinez@empresa.com', 'M', '1980-03-22'),
-('8888', 'Lucía', 'Morales', 2, 5, 500, 31, 'lucia.morales@empresa.com', 'F', '1994-12-01'),
-('9999', 'Diego', 'Ortiz', 4, 2, 850, 38, 'diego.ortiz@empresa.com', 'M', '1987-07-09'),
-('0000', 'María', 'Espinoza', 1, 5, 450, 34, 'maria.espinoza@empresa.com', 'F', '1991-09-15');
-
-insert into TProyecto (nombreProyecto, FechaInicio, FechaFinalizacion) values 
-('Migración en la Nube', '2026-01-15', '2026-06-30'),
-('Reestructuración Salarial', '2026-03-01', null),
-('Campaña Expansión 2026', '2026-05-01', '2026-12-31');
-
-insert into TEmpleadoProyecto (nEmpleadoID, nProyectoID) values 
-(1, 1), (4, 1), (2, 2), (6, 3);
-
-insert into TEmpleado (cNif, cNombre, cApellido, nDepartamentoID, nCargoID, nSalario, nEdad, cCorreo, cGenero, dFechaNacimiento) values 
-('1234', 'Roberto', 'Briones', 2, 3, 1300, 29, 'roberto.briones@empresa.com', 'M', '1997-01-20'),
-('5678', 'Laura', 'Chávez', 5, 4, 850, 27, 'laura.chavez@empresa.com', 'F', '1998-11-12'),
-('9012', 'Ricardo', 'Gutiérrez', 4, 2, 900, 42, 'ricardo.gutierrez@empresa.com', 'M', '1984-05-05');
-
-insert into TDepartamento (cNombreDepartamento) values 
-('Logística'), ('Auditoría Interna'), ('Seguridad');
-
-insert into TEmpleado (cNif, cNombre, cApellido, nDepartamentoID, nCargoID, nSalario, nEdad, cCorreo, cGenero, dFechaNacimiento) values 
-('0001', 'Frustrado', 'Error', 2, 3, 350, 25, 'error.salario@empresa.com', 'M', '2001-01-01');
-go
-
-insert into TSucursal (cNombreSucursal, cCiudad) values 
-('Sucursal Central', 'Managua'),
-('Sucursal Norte', 'Estelí'),
-('Sucursal Sur', 'Rivas');
-
-insert into TCliente (cNif, cNombre, cApellido, cCorreo, cTelefono, nEdad) values
-('C001', 'Juan', 'Pérez', 'juan.perez@email.com', '88881111', 25),
-('C002', 'María', 'Gómez', 'maria.gomez@email.com', '88882222', 30),
-('C003', 'Pedro', 'Martínez', 'pedro.m@email.com', '88883333', 45),
-('C004', 'Ana', 'Rodríguez', 'ana.rod@email.com', '88884444', 22),
-('C005', 'Luis', 'Sánchez', 'luis.s@email.com', '88885555', 35),
-('C006', 'Laura', 'Ramírez', 'laura.r@email.com', '88886666', 28),
-('C007', 'Carlos', 'Flores', 'carlos.f@email.com', '88887777', 50),
-('C008', 'Elena', 'Torres', 'elena.t@email.com', '88888888', 31),
-('C009', 'Jorge', 'Díaz', 'jorge.d@email.com', '88889999', 40),
-('C010', 'Sofía', 'Vargas', 'sofia.v@email.com', '88880000', 27),
-('C011', 'Diego', 'Castillo', 'diego.c@email.com', '77771111', 33),
-('C012', 'Lucía', 'Morales', 'lucia.m@email.com', '77772222', 29),
-('C013', 'Roberto', 'Ríos', 'roberto.r@email.com', '77773333', 42),
-('C014', 'Carmen', 'Ortiz', 'carmen.o@email.com', '77774444', 36),
-('C015', 'Manuel', 'Mendoza', 'manuel.m@email.com', '77775555', 48),
-('C016', 'Adriana', 'Silva', 'adriana.s@email.com', '77776666', 24),
-('C017', 'Francisco', 'Reyes', 'fran.r@email.com', '77777777', 55),
-('C018', 'Gabriela', 'Espinoza', 'gaby.e@email.com', '77778888', 26),
-('C019', 'Ricardo', 'Chávez', 'ricardo.c@email.com', '77779999', 38),
-('C020', 'Patricia', 'Herrera', 'patty.h@email.com', '77770000', 44);
-
-insert into TVenta (nClienteID, nSucursalID, dFechaVenta, nMontoTotal) values
-(1, 1, '2026-01-05', 150), (2, 1, '2026-01-06', 200), (3, 2, '2026-01-10', 350), (4, 3, '2026-01-12', 90), (5, 1, '2026-01-15', 500),
-(6, 2, '2026-01-20', 120), (7, 3, '2026-01-22', 750), (8, 1, '2026-01-25', 300), (9, 2, '2026-02-02', 450), (10, 3, '2026-02-05', 180),
-(11, 1, '2026-02-08', 250), (12, 2, '2026-02-12', 600), (13, 3, '2026-02-15', 95), (14, 1, '2026-02-18', 400), (15, 2, '2026-02-22', 110),
-(16, 3, '2026-02-25', 80), (17, 1, '2026-03-01', 900), (18, 2, '2026-03-04', 130), (1, 3, '2026-03-07', 220), (2, 1, '2026-03-10', 310),
-(3, 2, '2026-03-14', 420), (4, 3, '2026-03-18', 150), (5, 1, '2026-03-22', 620), (6, 2, '2026-03-25', 175), (7, 3, '2026-04-01', 800),
-(8, 1, '2026-04-03', 210), (9, 2, '2026-04-06', 530), (10, 3, '2026-04-10', 140), (11, 1, '2026-04-14', 330), (12, 2, '2026-04-18', 710),
-(13, 3, '2026-04-22', 115), (14, 1, '2026-04-25', 490), (15, 2, '2026-05-02', 260), (16, 3, '2026-05-05', 95), (17, 1, '2026-05-09', 1050),
-(18, 2, '2026-05-12', 340), (1, 3, '2026-05-15', 180), (2, 1, '2026-05-19', 290), (3, 2, '2026-05-22', 510), (4, 3, '2026-05-26', 125),
-(5, 1, '2026-06-01', 640), (6, 2, '2026-06-03', 215), (7, 3, '2026-06-05', 890), (8, 1, '2026-06-07', 410), (9, 2, '2026-06-08', 600),
-(10, 3, '2026-06-09', 320), (11, 1, '2026-06-10', 430), (12, 2, '2026-06-10', 750), (13, 3, '2026-06-10', 200), (14, 1, '2026-06-10', 550);
-go
-
-update TEmpleado set nSalario = nSalario * 1.10;
-update TEmpleado set nSalario = nSalario * 1.20 where nDepartamentoID = 2;
-update TEmpleado set cCorreo = 'carlos.m_nuevo@empresa.com' where nEmpleadoID = 1;
-update TEmpleado set nCargoID = 1 where nEmpleadoID = 3;
-update TEmpleado set nDepartamentoID = 3 where nEmpleadoID in (5, 6);
-update TEmpleado set bActivo = 0 where nSalario < 500;
-update TProyecto set FechaFinalizacion = '2026-08-15' where nProyectoID = 2;
-update TVenta set nMontoTotal = nMontoTotal * 1.10 where nSucursalID = 1;
-go
-
-insert into TEmpleadoProyecto (nEmpleadoID, nProyectoID) values (3, 3);
-go
-
-delete from TEmpleadoProyecto where nEmpleadoID = (select nEmpleadoID from TEmpleado where cNif = '1111');
-delete from TEmpleado where cNif = '1111';
-
-delete from TEmpleadoProyecto where nEmpleadoID in (select nEmpleadoID from TEmpleado where bActivo = 0);
-delete from TEmpleado where bActivo = 0;
-
-delete from TEmpleadoProyecto where nProyectoID = 2;
-delete from TProyecto where nProyectoID = 2;
-
-delete from TEmpleadoProyecto where nEmpleadoID = 4;
-
-delete from TDepartamento where nDepartamentoID not in (
-    select distinct nDepartamentoID from TEmpleado where nDepartamentoID is not null
-);
-delete from TCliente where nClienteID not in (select distinct nClienteID from TVenta);
-go
-
-select * from TEmpleado order by cApellido asc;
-select * from TEmpleado where nSalario > 1000;
-select * from TEmpleado where bActivo = 1;
-select * from TEmpleado where year(dFechaContratacion) = year(getdate());
-
-select e.*, d.cNombreDepartamento 
-from TEmpleado e
-inner join TDepartamento d on e.nDepartamentoID = d.nDepartamentoID;
-
-select e.*, c.cNombreCargo 
-from TEmpleado e
-inner join TCargo c on e.nCargoID = c.nCargoID;
-
-select distinct e.* from TEmpleado e
-inner join TEmpleadoProyecto ep on e.nEmpleadoID = ep.nEmpleadoID;
-
-select d.cNombreDepartamento, count(e.nEmpleadoID) as CantidadEmpleados
-from TDepartamento d
-left join TEmpleado e on d.nDepartamentoID = e.nDepartamentoID
-group by d.cNombreDepartamento;
-
-select d.cNombreDepartamento, avg(e.nSalario) as SalarioPromedio
-from TDepartamento d
-inner join TEmpleado e on d.nDepartamentoID = e.nDepartamentoID
-group by d.cNombreDepartamento;
-
-select d.cNombreDepartamento, max(e.nSalario) as SalarioMaximo, min(e.nSalario) as SalarioMinimo
-from TDepartamento d
-inner join TEmpleado e on d.nDepartamentoID = e.nDepartamentoID
-group by d.cNombreDepartamento;
-
-select p.nombreProyecto, count(ep.nEmpleadoID) as CantidadEmpleados
-from TProyecto p
-inner join TEmpleadoProyecto ep on p.nProyectoID = ep.nProyectoID
-group by p.nombreProyecto
-having count(ep.nEmpleadoID) > 2;
-
-select * from TEmpleado where cApellido like 'G%';
-select * from TEmpleado order by nSalario desc;
-select top 3 * from TEmpleado order by nSalario desc;
-select * from TEmpleado where nEdad between 25 and 40;
-select count(*) as TotalActivos from TEmpleado where bActivo = 1;
-select count(*) as TotalProyectos from TProyecto;
-
-select top 5 c.nClienteID, c.cNombre, c.cApellido, sum(v.nMontoTotal) as TotalComprado
-from TCliente c
-inner join TVenta v on c.nClienteID = v.nClienteID
-group by c.nClienteID, c.cNombre, c.cApellido
-order by TotalComprado desc;
-
-select year(dFechaVenta) as Anio, month(dFechaVenta) as Mes, sum(nMontoTotal) as TotalVentas, count(nVentaID) as CantidadVentas
-from TVenta
-group by year(dFechaVenta), month(dFechaVenta)
-order by Anio desc, Mes desc;
-
-select c.nClienteID, c.cNombre, c.cApellido, avg(v.nMontoTotal) as PromedioVenta
-from TCliente c
-inner join TVenta v on c.nClienteID = v.nClienteID
-group by c.nClienteID, c.cNombre, c.cApellido;
-
-select v.nVentaID, v.dFechaVenta, v.nMontoTotal, c.cNombre + ' ' + c.cApellido as Cliente, s.cNombreSucursal as Sucursal
-from TVenta v
-inner join TCliente c on v.nClienteID = c.nClienteID
-inner join TSucursal s on v.nSucursalID = s.nSucursalID;
-go
-
-alter table TEmpleado 
-drop constraint ck_TEmpleado_nEdad;
-go
-
-alter table TEmpleado 
-drop constraint uk_TEmpleado_cCorreo;
-go
-
-alter table TEmpleado 
-add constraint ck_TEmpleado_nEdad check (nEdad between 18 and 65);
-
-alter table TEmpleado 
-add constraint uk_TEmpleado_cCorreo unique (cCorreo);
-go
-
-drop table TEmpleadoProyecto;
-go
-
-drop table TProyecto;
-go
-
-drop table TEmpleado;
-go
-
-drop table TCargo;
-go
-
-drop table TDepartamento;
-go
-
-drop table TSucursal;
-go
-
-create table TCliente(
-    nClienteID int identity(1,1) constraint pk_TClienteID primary key,
-    cNif nvarchar(15) not null constraint uk_TCliente_cNif unique,
-    cNombre nvarchar(50) not null,
-    cApellido nvarchar(50) not null,
-    cCorreo nvarchar(100) constraint uk_TCliente_cCorreo unique,
-    cTelefono nvarchar(20),
-    nEdad int constraint ck_TCliente_nEdad check(nEdad >= 18),
-    dFechaRegistro date constraint df_TCliente_dFechaRegistro default getdate()
-);
-go
-
-create table TVenta(
-    nVentaID int identity(1,1) constraint pk_nVentaID primary key,
-    nClienteID int,
-    nSucursalID int,
-    dFechaVenta datetime constraint df_TVenta_dFechaVenta default getdate(),
-    nMontoTotal int constraint ck_TVenta_nMontoTotal check(nMontoTotal > 0),
-    constraint fk_TVenta_TCliente foreign key (nClienteID) references TCliente(nClienteID),
-    constraint fk_TVenta_TSucursal foreign key (nSucursalID) references TSucursal(nSucursalID)
-);
-go
-
-insert into TCliente (cNif, cNombre, cApellido, cCorreo, cTelefono, nEdad) values
-('C001', 'Juan', 'Pérez', 'juan.perez@email.com', '88881111', 25),
-('C002', 'María', 'Gómez', 'maria.gomez@email.com', '88882222', 30),
-('C003', 'Pedro', 'Martínez', 'pedro.m@email.com', '88883333', 45),
-('C004', 'Ana', 'Rodríguez', 'ana.rod@email.com', '88884444', 22),
-('C005', 'Luis', 'Sánchez', 'luis.s@email.com', '88885555', 35),
-('C006', 'Laura', 'Ramírez', 'laura.r@email.com', '88886666', 28),
-('C007', 'Carlos', 'Flores', 'carlos.f@email.com', '88887777', 50),
-('C008', 'Elena', 'Torres', 'elena.t@email.com', '88888888', 31),
-('C009', 'Jorge', 'Díaz', 'jorge.d@email.com', '88889999', 40),
-('C010', 'Sofía', 'Vargas', 'sofia.v@email.com', '88880000', 27),
-('C011', 'Diego', 'Castillo', 'diego.c@email.com', '77771111', 33),
-('C012', 'Lucía', 'Morales', 'lucia.m@email.com', '77772222', 29),
-('C013', 'Roberto', 'Ríos', 'roberto.r@email.com', '77773333', 42),
-('C014', 'Carmen', 'Ortiz', 'carmen.o@email.com', '77774444', 36),
-('C015', 'Manuel', 'Mendoza', 'manuel.m@email.com', '77775555', 48),
-('C016', 'Adriana', 'Silva', 'adriana.s@email.com', '77776666', 24),
-('C017', 'Francisco', 'Reyes', 'fran.r@email.com', '77777777', 55),
-('C018', 'Gabriela', 'Espinoza', 'gaby.e@email.com', '77778888', 26),
-('C019', 'Ricardo', 'Chávez', 'ricardo.c@email.com', '77779999', 38),
-('C020', 'Patricia', 'Herrera', 'patty.h@email.com', '77770000', 44);
-go
-
-insert into TVenta (nClienteID, nSucursalID, dFechaVenta, nMontoTotal) values
-(1, 1, '2026-01-05', 150), (2, 1, '2026-01-06', 200), (3, 2, '2026-01-10', 350), (4, 3, '2026-01-12', 90), (5, 1, '2026-01-15', 500),
-(6, 2, '2026-01-20', 120), (7, 3, '2026-01-22', 750), (8, 1, '2026-01-25', 300), (9, 2, '2026-02-02', 450), (10, 3, '2026-02-05', 180),
-(11, 1, '2026-02-08', 250), (12, 2, '2026-02-12', 600), (13, 3, '2026-02-15', 95), (14, 1, '2026-02-18', 400), (15, 2, '2026-02-22', 110),
-(16, 3, '2026-02-25', 80), (17, 1, '2026-03-01', 900), (18, 2, '2026-03-04', 130), (1, 3, '2026-03-07', 220), (2, 1, '2026-03-10', 310),
-(3, 2, '2026-03-14', 420), (4, 3, '2026-03-18', 150), (5, 1, '2026-03-22', 620), (6, 2, '2026-03-25', 175), (7, 3, '2026-04-01', 800),
-(8, 1, '2026-04-03', 210), (9, 2, '2026-04-06', 530), (10, 3, '2026-04-10', 140), (11, 1, '2026-04-14', 330), (12, 2, '2026-04-18', 710),
-(13, 3, '2026-04-22', 115), (14, 1, '2026-04-25', 490), (15, 2, '2026-05-02', 260), (16, 3, '2026-05-05', 95), (17, 1, '2026-05-09', 1050),
-(18, 2, '2026-05-12', 340), (1, 3, '2026-05-15', 180), (2, 1, '2026-05-19', 290), (3, 2, '2026-05-22', 510), (4, 3, '2026-05-26', 125),
-(5, 1, '2026-06-01', 640), (6, 2, '2026-06-03', 215), (7, 3, '2026-06-05', 890), (8, 1, '2026-06-07', 410), (9, 2, '2026-06-08', 600),
-(10, 3, '2026-06-09', 320), (11, 1, '2026-06-10', 430), (12, 2, '2026-06-10', 750), (13, 3, '2026-06-10', 200), (14, 1, '2026-06-10', 550);
-go
-
-update TVenta
-set nMontoTotal = nMontoTotal * 1.10
-where nSucursalID = 1;
-go
-
-delete from TCliente
-where nClienteID not in (select distinct nClienteID from TVenta);
-go
-
-select top 5 c.nClienteID, c.cNombre, c.cApellido, sum(v.nMontoTotal) as TotalComprado
-from TCliente c
-inner join TVenta v on c.nClienteID = v.nClienteID
-group by c.nClienteID, c.cNombre, c.cApellido
-order by TotalComprado desc;
-go
-
-select year(dFechaVenta) as Anio, month(dFechaVenta) as Mes, sum(nMontoTotal) as TotalVentas, count(nVentaID) as CantidadVentas
-from TVenta
-group by year(dFechaVenta), month(dFechaVenta)
-order by Anio desc, Mes desc;
-go
-
-select c.nClienteID, c.cNombre, c.cApellido, avg(v.nMontoTotal) as PromedioVenta
-from TCliente c
-inner join TVenta v on c.nClienteID = v.nClienteID
-group by c.nClienteID, c.cNombre, c.cApellido;
-go
-
-select v.nVentaID, v.dFechaVenta, v.nMontoTotal, c.cNombre + ' ' + c.cApellido as Cliente, s.cNombreSucursal as Sucursal
-from TVenta v
-inner join TCliente c on v.nClienteID = c.nClienteID
-inner join TSucursal s on v.nSucursalID = s.nSucursalID;
+delete from Citas where deleted_at is not null;
+delete from Pacientes where deleted_at is not null;
+delete from Medicos where deleted_at is not null;
+delete from Tratamientos where deleted_at is not null;
+delete from Medicamentos where deleted_at is not null;
+delete from Habitaciones where deleted_at is not null;
+delete from Especialidades where deleted_at is not null;
 go
